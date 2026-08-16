@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Cursed Palace of Arithmia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<!-- ambient global canvas fog layer -->
+<canvas id="global-fx" class="global-fx"></canvas>
+
+<!-- ============ MAIN MENU ============ -->
+<section id="screen-menu" class="screen active">
+  <div class="menu-bg">
+    <canvas id="menu-particles" class="stage-canvas"></canvas>
+    <div class="stars"></div>
+  </div>
+  <div class="menu-content">
+    <h1 class="game-title">
+      <span class="crown-emoji">🏰</span>
+      The Cursed Palace<br><span class="of-arithmia">of Arithmia</span>
+    </h1>
+    <p class="tagline">Recover the twenty relics. Restore the Crown of Infinity. Escape before the curse claims you too.</p>
+
+    <div id="menu-crown" class="crown-progress" title="Crown of Infinity — fills as relics are recovered">
+      <!-- 20 gem slots injected by JS -->
+    </div>
+
+    <nav class="menu-buttons">
+      <button class="btn btn-gold" id="btn-start">⚔️ Start Game</button>
+      <button class="btn" id="btn-continue">📜 Continue</button>
+      <button class="btn" id="btn-leaderboard">🏆 Leaderboard</button>
+      <button class="btn" id="btn-settings">⚙️ Settings</button>
+      <button class="btn" id="btn-credits">🖋️ Credits</button>
+      <button class="btn btn-ghost" id="btn-exit">🚪 Exit</button>
+    </nav>
+  </div>
+</section>
+
+<!-- ============ DIFFICULTY PICK (pre-game) ============ -->
+<section id="screen-difficulty" class="screen">
+  <div class="panel-center parchment-panel">
+    <h2>Choose Your Trial</h2>
+    <p class="muted">The palace's timer bends to your courage.</p>
+    <div class="difficulty-grid">
+      <button class="diff-card" data-diff="easy"><span class="diff-name">Squire</span><span class="diff-sub">90s per room · gentler curse</span></button>
+      <button class="diff-card selected" data-diff="normal"><span class="diff-name">Knight</span><span class="diff-sub">60s per room · balanced curse</span></button>
+      <button class="diff-card" data-diff="hard"><span class="diff-name">Champion</span><span class="diff-sub">40s per room · merciless curse</span></button>
+    </div>
+    <button class="btn btn-gold" id="btn-begin-adventure">Enter the Palace</button>
+    <button class="btn btn-ghost" id="btn-diff-back">Back</button>
+  </div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section id="screen-settings" class="screen">
+  <div class="panel-center parchment-panel">
+    <h2>⚙️ Settings</h2>
+    <label class="setting-row">
+      <span>Music Volume</span>
+      <input type="range" id="set-music" min="0" max="1" step="0.01">
+    </label>
+    <label class="setting-row">
+      <span>Sound Effects</span>
+      <input type="range" id="set-sfx" min="0" max="1" step="0.01">
+    </label>
+    <label class="setting-row">
+      <span>Difficulty</span>
+      <select id="set-difficulty">
+        <option value="easy">Squire (easy)</option>
+        <option value="normal">Knight (normal)</option>
+        <option value="hard">Champion (hard)</option>
+      </select>
+    </label>
+    <label class="setting-row">
+      <span>Graphics (particle density)</span>
+      <select id="set-graphics">
+        <option value="low">Low</option>
+        <option value="high">High</option>
+      </select>
+    </label>
+    <label class="setting-row">
+      <span>Fullscreen</span>
+      <button class="btn btn-small" id="set-fullscreen">Toggle Fullscreen</button>
+    </label>
+    <button class="btn btn-gold" id="btn-settings-back">Save &amp; Return</button>
+  </div>
+</section>
+
+<!-- ============ LEADERBOARD ============ -->
+<section id="screen-leaderboard" class="screen">
+  <div class="panel-center parchment-panel wide">
+    <h2>🏆 Leaderboard</h2>
+    <table class="leaderboard-table">
+      <thead><tr><th>#</th><th>Explorer</th><th>Score</th><th>Time</th><th>Hints</th></tr></thead>
+      <tbody id="leaderboard-body"></tbody>
+    </table>
+    <button class="btn btn-gold" id="btn-leaderboard-back">Back</button>
+  </div>
+</section>
+
+<!-- ============ CREDITS ============ -->
+<section id="screen-credits" class="screen">
+  <div class="panel-center parchment-panel">
+    <h2>🖋️ Credits</h2>
+    <p class="muted">The Cursed Palace of Arithmia — a browser adventure built with HTML5, CSS3, vanilla JavaScript, Canvas, and the Web Audio API for all synthesized music and sound effects.</p>
+    <h3>Achievements</h3>
+    <ul class="achievement-list" id="credits-achievements"></ul>
+    <p class="muted small">104 procedurally-generated questions across Algebra, Geometry, Number Theory, Logic, Patterns, Coordinate Geometry, Sequences, and Probability.</p>
+    <button class="btn btn-gold" id="btn-credits-back">Back</button>
+  </div>
+</section>
+
+<!-- ============ GAME SCREEN ============ -->
+<section id="screen-game" class="screen">
+  <div class="hud">
+    <div class="hud-left">
+      <div class="hud-item" id="hud-hearts">❤️❤️❤️</div>
+      <div class="hud-item" id="hud-room-counter">Room 1 / 20</div>
+    </div>
+    <div class="hud-center">
+      <div class="hud-score-label">SCORE</div>
+      <div class="hud-score" id="hud-score">1000</div>
+    </div>
+    <div class="hud-right">
+      <div class="hud-item hud-timer" id="hud-timer">⏳ 60</div>
+      <button class="btn btn-small btn-ghost" id="btn-room-exit">↩ Exit</button>
+      <button class="btn btn-small" id="btn-inventory-toggle">🎒 Inventory</button>
+    </div>
+  </div>
+
+  <div class="room-stage" id="room-stage">
+    <canvas id="room-particles" class="stage-canvas"></canvas>
+    <div class="stage-fog"></div>
+    <div class="torch torch-left">🔥</div>
+    <div class="torch torch-right">🔥</div>
+    <div class="room-title" id="room-title">Main Gate</div>
+    <div class="guardian" id="guardian-el">🛡️</div>
+    <div class="guardian-name" id="guardian-name">Stone Sentinel</div>
+
+    <div class="door-wrap">
+      <div class="door" id="door-el">
+        <div class="door-leaf left"></div>
+        <div class="door-leaf right"></div>
+      </div>
+    </div>
+
+    <div class="chest-wrap" id="chest-wrap">
+      <div class="chest" id="chest-el">
+        <div class="chest-lid"></div>
+        <div class="chest-base"></div>
+        <div class="chest-glow"></div>
+      </div>
+      <div class="reward-popup" id="reward-popup"></div>
+    </div>
+  </div>
+
+  <div class="puzzle-panel parchment-panel" id="puzzle-panel">
+    <div class="puzzle-topic" id="puzzle-topic">Algebra</div>
+    <div class="puzzle-question" id="puzzle-question">Loading trial...</div>
+    <div class="choices" id="choices-container"></div>
+    <div class="hint-box" id="hint-box" style="display:none;"></div>
+    <div class="puzzle-actions">
+      <button class="btn btn-hint" id="btn-hint">💡 Hint (−75)</button>
+      <button class="btn btn-ghost" id="btn-skip">⏭️ Skip (−100)</button>
+    </div>
+  </div>
+
+  <div class="inventory-drawer" id="inventory-drawer">
+    <h3>🎒 Inventory</h3>
+    <div class="inventory-grid" id="inventory-grid"></div>
+    <button class="btn btn-small" id="btn-inventory-close">Close</button>
+  </div>
+
+  <!-- overlay for wrong answer / heart lost feedback -->
+  <div class="overlay-flash" id="overlay-flash"></div>
+
+  <!-- room-fail overlay -->
+  <div class="overlay-modal" id="overlay-roomfail" style="display:none;">
+    <div class="modal-card">
+      <h2>💀 The Guardian Overpowers You</h2>
+      <p id="roomfail-stats"></p>
+      <button class="btn btn-gold" id="btn-roomfail-retry">Retry This Chamber</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VICTORY / ENDING ============ -->
+<section id="screen-victory" class="screen">
+  <canvas id="victory-particles" class="stage-canvas victory-canvas"></canvas>
+  <div class="victory-content">
+    <h1 class="victory-title">🏆 The Crown of Infinity is Restored</h1>
+    <p class="victory-sub">The sun rises over Arithmia. The curse is broken.</p>
+    <div class="victory-stats" id="victory-stats"></div>
+    <h3>Achievements Unlocked</h3>
+    <ul class="achievement-list" id="victory-achievements"></ul>
+    <div class="name-entry">
+      <label for="victory-name">Record your name for the Leaderboard:</label>
+      <input type="text" id="victory-name" maxlength="18" placeholder="Enter your name">
+      <button class="btn btn-gold" id="btn-victory-save">Save Score</button>
+    </div>
+    <button class="btn btn-ghost" id="btn-victory-menu">Return to Menu</button>
+  </div>
+</section>
+
+<script defer src="assets/js/audio.js"></script>
+<script defer src="assets/js/game.js"></script>
+<script defer src="assets/js/particles.js"></script>
+<script defer src="assets/js/questions.js"></script>
+<script defer src="assets/js/rooms.js"></script>
+<script defer src="assets/js/main.js"></script>
+</body>
+</html>
